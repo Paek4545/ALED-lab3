@@ -5,6 +5,7 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -20,8 +21,10 @@ import java.util.List;
  */
 public class FASTAReader {
 
-	protected byte[] content;
-	protected int validBytes;
+	protected byte[] content; //genoma
+	protected int validBytes; // indica cuántos de los bytes de content son válidos. 
+							  // Es decir, solo serán válidos los elementos desde 
+							  // content[0] hasta content[validBytes- 1]
 
 	/**
 	 * Creates a new FASTAReader from a FASTA file.
@@ -161,9 +164,31 @@ public class FASTAReader {
 	 * @return All the positions of the first character of every occurrence of the
 	 *         pattern in the data.
 	 */
+	// ¿Qué hacer el método search() de la clase FASTAReader? ¿Qué devuelve?
+	// El método search implementa una búsqueda lineal dado los patrones del array que devuelve una Lista de Integer
+	// que apunta a las posiciones iniciales de todas las ocurencias del patrón de los datos.
 	public List<Integer> search(byte[] pattern) {
-		// TODO
-		return null;
+		// Nos creamos la lista de Integer a devolver, que son cada una de las posiciones de la secuencia de datos
+		List<Integer> positions = new ArrayList<Integer>();
+		// Recorremos cada posición hasta el máximo de esta (desde 0 a validBytes-pattern.length) --> se puede
+		// deducir del método compare()
+		// Como en el método compare() pone que la suma de la posición y la longitud del array de pattern no puede
+		// ser mayor que validBytes, podemos deducir de aquí que para no pasarnos de la posición, tenemos que hacer:
+		// posición <= validBytes - pattern.length
+		for (int i = 0; i<= validBytes - pattern.length; i++) {
+		// Hacemos un try-catch como nos pide el enunciado
+			try {
+				if(compare(pattern, i)) {
+					positions.add(i); // Si hay coincidencia en la secuencia o patrón, añadimos el contenido
+				}
+			} catch (FASTAException e) {
+				// En caso de que el patrón se salga del rango de búsqueda, paramos la busqueda
+				break;
+			}
+			
+		}
+		// Devolmemos las posiciones con el contenido añadido
+		return positions;
 	}
 
 	/**
@@ -182,15 +207,17 @@ public class FASTAReader {
 		// TODO
 		return null;
 	}
-
+	
+	//  ¿Qué argumentos tendrá el método main()? ¿Qué función tiene cada uno?
+	// El main utiliza como argumentos el args[0] (nombre del fichero FASTA) y el args[1] (secuencia o patrón a buscar)
 	public static void main(String[] args) {
 		long t1 = System.nanoTime();
-		FASTAReader reader = new FASTAReader(args[0]);
+		FASTAReader reader = new FASTAReader(args[0]); // args[0] se usa para crear el objeto reader
 		if (args.length == 1)
 			return;
 		System.out.println("Tiempo de apertura de fichero: " + (System.nanoTime() - t1));
 		long t2 = System.nanoTime();
-		List<Integer> posiciones = reader.search(args[1].getBytes());
+		List<Integer> posiciones = reader.search(args[1].getBytes()); // args[1] se usa para obtener las posiciones de la secuencia o patrón
 		System.out.println("Tiempo de búsqueda: " + (System.nanoTime() - t2));
 		if (posiciones.size() > 0) {
 			for (Integer pos : posiciones)
@@ -198,5 +225,9 @@ public class FASTAReader {
 		} else
 			System.out.println("No he encontrado : " + args[1] + " en ningun sitio");
 		System.out.println("Tiempo total: " + (System.nanoTime() - t1));
+		
+	// La carpeta cromosome se encuentra en formato .fa, que contienen las secuencias de los nucleótidos, donde
+	// en chr19.fa y chr19segment.fa podemos encontrar minúsculas, cosa que no es problema ya que el método
+	// readFile convierte las minúsculas en mayúsculas.
 	}
 }
