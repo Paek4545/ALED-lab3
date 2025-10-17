@@ -1,5 +1,6 @@
 package es.upm.dit.aled.lab3.binary;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,10 +18,13 @@ import es.upm.dit.aled.lab3.FASTAReader;
  * allow for the implementation of binary search.
  * 
  * @author mmiguel, rgarciacarmona
- *
+ */
+
+/*  FASTAReaderSuffixes: Extiende FASTAReader para soportar la búsqueda binaria.
  */
 public class FASTAReaderSuffixes extends FASTAReader {
 	protected Suffix[] suffixes;
+
 
 	/**
 	 * Creates a new FASTAReader from a FASTA file.
@@ -77,10 +81,97 @@ public class FASTAReaderSuffixes extends FASTAReader {
 	 *         pattern in the data.
 	 */
 	@Override
+	/*  El método search() debe aprovecharse de la lista ordenada de sufijos para poder ejecutar
+ una búsqueda binaria
+ */
 	public List<Integer> search(byte[] pattern) {
-		// TODO
-		return null;
+	    // Creamos la lista de posiciones a devolver (inicialmente vacía)
+	    List<Integer> positions = new ArrayList<>();
+
+	    // Inicializamos lo y hi
+	    int lo = 0; // Índice más bajo a considerar
+	    int hi = suffixes.length - 1; // Índice más alto a considerar
+
+	    // Para determinar si se ha encontrado el patrón
+	    boolean found = false;
+	    // Contador usado para recorrer el patrón y compararlo carácter por carácter con el sufijo actual
+	    int index = 0;
+	    
+	    // Búsqueda binaria
+	    do {
+	    // Calculamos el índice medio
+	        int m = (int) Math.floor(lo + (hi - lo) / 2);
+	        int posSuffix = suffixes[m].suffixIndex; // posición del sufijo
+	        // Reinicia el índice del patrón antes de empezar a comparar con el sufijo
+	        index = 0;
+
+	        // Comparar carácter por carácter mientras no se salga del rango
+	        while (index < pattern.length && //Comparamos todo el patrón
+		               posSuffix + index < content.length && //Comparamos todo el contenido del genoma
+	               pattern[index] == content[posSuffix + index]) { //Los caracteres no coinciden
+	        	// Si hay coincidencia, incrementamos en 1 el índice
+	            index++;
+	        }
+
+	        // Coincidencia completa
+	        // Si el índice llega al final del patrón, añdimos la posición del sufijo y detenemos la búsqueda binaria
+	        if (index == pattern.length) {
+	            positions.add(posSuffix);
+	            found = true;
+	            
+	            // Buscamos coincidencias hacia arriba (índices menores)
+	            int i = m - 1;
+	            while (i >= 0) {
+	                int p = suffixes[i].suffixIndex;
+	                int j = 0;
+	                while (j < pattern.length &&
+	                       p + j < content.length &&
+	                       pattern[j] == content[p + j]) {
+	                    j++;
+	                }
+	                if (j == pattern.length) {
+	                    positions.add(0,p);
+	                    i--;
+	                } else {
+	                    break; // Se acabaron las coincidencias hacia arriba
+	                }
+	            }
+
+	            // Buscamos las coincidencias hacia abajo (índices mayores)
+	            int i2 = m + 1;
+	            while (i2 < suffixes.length) {
+	                int p2 = suffixes[i2].suffixIndex;
+	                int j2 = 0;
+	                while (j2 < pattern.length &&
+	                       p2 + j2 < content.length &&
+	                       pattern[j2] == content[p2 + j2]) {
+	                    j2++;
+	                }
+	                if (j2 == pattern.length) {
+	                    positions.add(p2);
+	                    i2++;
+	                } else {
+	                    break; // Se acabaron las coincidencias hacia abajo
+	                }
+	            }
+	        }
+	        // Si todavía hay caracteres para comparar, decidir hacia dónde moverse
+	        else if (index < pattern.length && posSuffix + index < content.length) {
+	        	// Patrón menor
+	            if ((pattern[index]) < (content[posSuffix + index])) {
+	            // Reducimos el límite superior --> descartamos la mitad superior
+	                hi = m - 1;
+	            } else {
+	            // Descartamos la mitad inferior
+	                lo = m + 1;
+	            }
+	        }
+
+	    } while (hi - lo > 1 && !found);
+
+	    return positions;
 	}
+
 
 	public static void main(String[] args) {
 		long t1 = System.nanoTime();

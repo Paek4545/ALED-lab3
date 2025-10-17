@@ -7,6 +7,9 @@ package es.upm.dit.aled.lab3.binary;
  *
  * @author mmiguel, rgarciacarmona
  */
+
+/*  Suffix: Modela un sufijo, que no es más que un entero que indica en qué posición de
+ content se encuentra dicho sufijo. */
 public class Suffix {
 	public final int suffixIndex;
 

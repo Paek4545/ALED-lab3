@@ -8,6 +8,10 @@ import java.util.Comparator;
  *
  * @author mmiguel, rgarciacarmona
  */
+/* 
+ * SuffixComparator: Extiende el interfaz Comparator para permitir comparar dos sufijos.
+ Aquí “comparar” significa saber cuál va antes a la hora de ordenar dos de ellos.
+ */
 public class SuffixComparator implements Comparator<Suffix> {
 
 	// Since FASTAReader is the base class containing content and validBytes,

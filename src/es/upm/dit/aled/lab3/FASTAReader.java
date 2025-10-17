@@ -138,8 +138,17 @@ public class FASTAReader {
 	 * pattern when one has been found to be different.
 	 */
 	private boolean compareImproved(byte[] pattern, int position) throws FASTAException {
-		// TODO
-		return false;
+		if (position + pattern.length > validBytes) {
+			throw new FASTAException("Pattern goes beyond the end of the file.");
+		}
+		boolean match = true;
+		for (int i = 0; i < pattern.length; i++) {
+			if (pattern[i] != content[position + i]) {
+				match = false;
+				break; // una vez que el primer elemento de la cadena sea distinta, deja de mirar esa cadena hasta la siguiente
+			}
+		}
+		return match;
 	}
 
 	/*
@@ -151,9 +160,18 @@ public class FASTAReader {
 	 * ones present in the indicated position.
 	 */
 	private int compareNumErrors(byte[] pattern, int position) throws FASTAException {
-		// TODO
-		return -1;
+		if (position + pattern.length > validBytes) {
+			throw new FASTAException("Pattern goes beyond the end of the file.");
+		}
+		int index = 0;
+		for (int i =0; i <pattern.length; i++) {
+			if (pattern[i] != content[position+i]) {
+				index++;
+			}
+		}
+		return index;
 	}
+	
 
 	/**
 	 * Implements a linear search to look for the provided pattern in the data
@@ -168,28 +186,24 @@ public class FASTAReader {
 	// El método search implementa una búsqueda lineal dado los patrones del array que devuelve una Lista de Integer
 	// que apunta a las posiciones iniciales de todas las ocurencias del patrón de los datos.
 	public List<Integer> search(byte[] pattern) {
-		// Nos creamos la lista de Integer a devolver, que son cada una de las posiciones de la secuencia de datos
-		List<Integer> positions = new ArrayList<Integer>();
-		// Recorremos cada posición hasta el máximo de esta (desde 0 a validBytes-pattern.length) --> se puede
-		// deducir del método compare()
-		// Como en el método compare() pone que la suma de la posición y la longitud del array de pattern no puede
-		// ser mayor que validBytes, podemos deducir de aquí que para no pasarnos de la posición, tenemos que hacer:
-		// posición <= validBytes - pattern.length
-		for (int i = 0; i<= validBytes - pattern.length; i++) {
-		// Hacemos un try-catch como nos pide el enunciado
-			try {
-				if(compare(pattern, i)) {
-					positions.add(i); // Si hay coincidencia en la secuencia o patrón, añadimos el contenido
-				}
-			} catch (FASTAException e) {
-				// En caso de que el patrón se salga del rango de búsqueda, paramos la busqueda
-				break;
+		// Creamos la lista de posiciones a devolver (inicialmente vacía)
+	List<Integer> positions = new ArrayList<Integer>();
+		// Recorremos hasta la posición máxima, en este caso será hasta position <= validBytes - pattern.lenght
+	for (int i = 0; i <= validBytes - pattern.length; i++) {
+		// Comparamos las cadenas:
+		try {
+			if (compareImproved(pattern, i)) {
+			// Si al comparar, son iguales, añadimos a las posiciones los elementos (nucleótidos en este caso)
+				positions.add(i);
 			}
-			
+		} catch (FASTAException e) {
+			e.printStackTrace();
 		}
-		// Devolmemos las posiciones con el contenido añadido
-		return positions;
 	}
+	return positions;
+	}
+	
+	// Grado de complejidad: en caso de que el patrón sea comparable al del texto --> O(n*n) = O(n^2)
 
 	/**
 	 * Implements a linear search to look for the provided pattern in the data array
@@ -204,8 +218,22 @@ public class FASTAReader {
 	 *         pattern (with up to 1 errors) in the data.
 	 */
 	public List<Integer> searchSNV(byte[] pattern) {
-		// TODO
-		return null;
+		// Nos creamos a lista de posiciones a devolver:
+		List<Integer> positions = new ArrayList<Integer>();
+		// Nos recorremos toda la secuencia del genoma
+		for (int i =0; i <= validBytes - pattern.length; i++) {
+			try {
+		//Comparamos los números de errores que haya en la secuencia (y que haya 1 o menos)
+				if (compareNumErrors(pattern, i) <= 1) {
+		// Añadimos la posición del nuclótido a la secuencia
+					positions.add(i);
+				}
+			} catch (FASTAException e) {
+				e.printStackTrace();
+			}
+		}
+		// Devolvemos la lista de posiciones actualizada
+		return positions;
 	}
 	
 	//  ¿Qué argumentos tendrá el método main()? ¿Qué función tiene cada uno?
@@ -229,5 +257,19 @@ public class FASTAReader {
 	// La carpeta cromosome se encuentra en formato .fa, que contienen las secuencias de los nucleótidos, donde
 	// en chr19.fa y chr19segment.fa podemos encontrar minúsculas, cosa que no es problema ya que el método
 	// readFile convierte las minúsculas en mayúsculas.
+		
+		// Compare los tiempos obtenidos al buscar en un archivo de 600 KB con los obtenidos al
+		// buscar en un archivo de 60 MB. ¿Son consistentes con el orden del algoritmo?
+		// Tiempo total en el archivo de 600 KB con compare: Tiempo total: 3654953200
+		// Tiempo total en el archivo de 60 MB con compare: Tiempo total: 347226717200
+		// Los tiempos obtenidos son consistentes con el orden del algoritmo, ya que al elevar al cuadrado
+		// los datos crecen de forma exponencial.
+		
+		// Tiempo total del archivo de 600 KB con compareImproved: Tiempo total: 3423812700
+		// Tiempo total en el archivo de 60 MB con compareImproved: Tiempo total: 331240444400
+		// Se puede observar una mejoría en el tiempo, pero tampoco mucha diferencia entre ambos métodos.
+		
+		// Tiempo total del archivo de 600 KB con searchSNV: Tiempo total: 3349406100
+		// Tiempo total del archivo de 60 MB con serachSNV: Tiempo total: 345996716000
 	}
 }
