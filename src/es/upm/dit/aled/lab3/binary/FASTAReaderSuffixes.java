@@ -133,7 +133,7 @@ public class FASTAReaderSuffixes extends FASTAReader {
 	                    positions.add(0,p);
 	                    i--;
 	                } else {
-	                    break; // Se acabaron las coincidencias hacia arriba
+	                    break; // Se acabaron las coincidencias hacia arriba, nos salimos del bucle while
 	                }
 	            }
 
